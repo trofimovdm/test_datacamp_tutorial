@@ -1,0 +1,74 @@
+---
+title: "Контрольная 4"
+author: "Шапокляк"
+date: "29/05/2018"
+output: html_document
+lang: ru-RU
+editor_options: 
+chunk_output_type: console
+---
+Подкрепляемся библиотеками
+```{r}
+library(tidyverse) # манипуляции с данными
+library(maxLik) #maximal liknhood
+
+```
+
+Упражнение 1 - симуляционное
+симуляционно оцените вероятность того
+$P(XY>Z + Y)$, $Var(X+Y/Z)$, $E(X^2/Y+Z)$
+$x \sim Pois(\lambda = 5)$, $Y \sim N(10, 16)$, $Z \sim Exp(\lambda = 1)$
+
+Сгенерируем табличку
+```{r}
+n_sim <- 10000
+set.seed(5) #для воспроизводимости генератора случайных чисел
+sim <- tibble(x = rpois(n_sim, lambda = 5), 
+y = rnorm(n_sim, mean = 10, sd = 4),
+z = rexp(n_sim, rate = 1))
+```
+Создадим вспомогательные переменные
+```{r}
+sim2 <- mutate(sim, w = (x + y) / z,
+q = x^2 / (y + z),
+event = x * y > z + y)
+```
+
+оцениваем то, что требуется
+
+```{r}
+mean(sim2$event)
+```
+Оценка мат ожидания:
+```{r}
+mean(sim2$q)
+```
+оценка дисперсии:
+```{r}
+var(sim2$w)
+```
+
+Exercise 2
+Max_Lik-d
+
+Встроенный набор данных (price of diamonds)
+```{r}
+y <- diamonds$price
+```
+
+Модель: $Y_{i}$ - независ, $f(y_{i}) \propto \dfrac(k)(2) exp(-k|y_i - m|)$
+k, m - оценить макс. правдоподобием
+```{r}
+ell <- function(theta, y) {
+k <- theta[1]
+mu <- theta[2]
+n <- length(y)
+log_lik <- n* log(k) - k* sum(abs(y - mu))
+return(log_lik)
+}
+```
+Max L:
+```{r}
+model <- maxLik(ell, start = c(0.0003, 2400), y = y)
+summary(model)
+```
